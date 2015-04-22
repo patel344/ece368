@@ -1,0 +1,43 @@
+Query 1: 0.32,	4 Vertex   Distance From Source
+0 		 0.32
+1 		 0.47
+2 		 0.78
+3 		 0.32
+4 		 0.68
+5 		 0.00
+
+Query 2: 5
+Query 3: 5,	1 2 3 4 5 rear: 0 Queue: 6
+Visited: 6
+front: 0
+
+neigbors: 5
+1
+rear: 1 Queue: 1
+2
+rear: 2 Queue: 2
+3
+rear: 3 Queue: 3
+4
+rear: 4 Queue: 4
+Visited: 1
+front: 1
+
+neigbors: 3
+1
+2
+3
+Visited: 2
+front: 2
+
+neigbors: 4
+1
+2
+3
+4
+Visited: 3
+front: 3
+
+neigbors: 3
+1
+2
