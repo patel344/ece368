@@ -12,7 +12,7 @@ typedef struct vertices{
 typedef struct graph{
     int users;
     Vertex* V;
-    float* Edges;
+    double* Edges;
 }Graph;
 
 char * * explode(const char * str, const char * delims, int * arrLen);
@@ -23,17 +23,17 @@ Graph create_empty_Graph(int users, Vertex* Vertex_Array);
 
 void print_graph(Graph graph);
 
-float calc_UL(Vertex user1, Vertex user2);
+double calc_UL(Vertex user1, Vertex user2);
 
-float find_max(Graph G);
+double find_max(Graph G);
 
 Graph UNnorm_Graph(Graph G);
 
-Graph norm_Graph(float max, float lambda, Graph G);
+Graph norm_Graph(double max, float lambda, Graph G);
 
 int* Query3(Graph G, int queryNode);
 
-float Query5(Graph G);
+double Query5(Graph G);
 
 int minDist(Graph G, float* dist, int* S);
 
@@ -47,4 +47,8 @@ int delete(int** Queue, int* front, int* rear);
 
 int isEmpty(int* front, int* rear);
 
-int* Query4(Graph G, int queryNode);
+int cmpfunc(const void * a, const void * b);
+
+int Query4(Graph G, int queryNode, int display);
+
+void Query6(Graph G);

@@ -58,7 +58,7 @@ char * * explode(const char * str, const char * delims, int * arrLen)
     newArray[i-last] = '\0';
     strArr[N] = newArray;
     *arrLen = N+1;
-    free(newArray);
+    //free(newArray);
     return strArr;
 
 }
@@ -82,29 +82,35 @@ Graph create_empty_Graph(int users, Vertex* Vertex_Array){
     int row,col;
     graph.users = users;
     graph.V = Vertex_Array;
-    graph.Edges = (float*)malloc(users*users*sizeof(float));
+    graph.Edges = (double*)malloc(users*users*sizeof(double));
     for(row = 0; row < users; row++){
 	for(col = 0; col < users; col++){
-	    *(graph.Edges + row*users + col) = 0;
+	    *(graph.Edges + row*users + col) = 0.0;
 	}
     }
     return graph;
 }
 void print_graph(Graph graph){
     int row,col;
+    int i = 0;
     for(row = 0; row < graph.users; row++){
 	for(col = 0; col < graph.users; col++){
 	    if(col == (graph.users-1)){
-		printf("%.2f\n", *(graph.Edges + row*graph.users + col));
+		//printf("%.2f\n", *(graph.Edges + row*graph.users + col));
 	     }
 	     else{
-		 printf("%.2f ", *(graph.Edges + row*graph.users + col));	       }
+		 //printf("%.2f ", *(graph.Edges + row*graph.users + col));
+	     }	
+	    if(*(graph.Edges+row*graph.users+col) > 0.0){
+		i++;
+	    }
 	}
     }
+    printf("\nEdges: %d\n", i); 
     return;
 }
-float calc_UL(Vertex user1, Vertex user2){
-    float UL = 0.0;
+double calc_UL(Vertex user1, Vertex user2){
+    double UL = 0.0;
     int i = 0;
     for(i = 0; i<8; i++){
 	UL = UL + pow((user1.data[i] - user2.data[i]), 2);
@@ -112,8 +118,8 @@ float calc_UL(Vertex user1, Vertex user2){
     UL = sqrt(UL);
     return UL;
 }
-float find_max(Graph G){
-    float max = 0.0;
+double find_max(Graph G){
+    double max = 0.0;
     int row,col;
     for(row = 0; row < G.users; row++){
 	for(col = 0; col < G.users; col++){
@@ -134,14 +140,18 @@ Graph UNnorm_Graph(Graph G){
     return G;
 }
 						     
-Graph norm_Graph(float max, float lambda, Graph G){
+Graph norm_Graph(double max, float lambda, Graph G){
     int row,col;
     for(row = 0; row<G.users; row++){
 	for(col=0; col<G.users; col++){
+	    if(row == col){
+		*(G.Edges + row*G.users + col) = max;
+	    }
 	    *(G.Edges + row*G.users + col) /= max;
-	    *(G.Edges + row*G.users + col) = 1 - *(G.Edges + row*G.users + col);
-	    if(*(G.Edges + row*G.users + col) < lambda || *(G.Edges + row*G.users + col) == 1.00){
-		*(G.Edges + row*G.users + col) = 0;
+	    *(G.Edges + row*G.users + col) = 1.0 - *(G.Edges + row*G.users + col);
+	    *(G.Edges + row*G.users + col) = (floorf(*(G.Edges+row*G.users+col) * 100)) / 100;
+	    if(*(G.Edges + row*G.users + col) <= lambda){
+		*(G.Edges + row*G.users + col) = 0.0;
 	    }
 	}
     }
@@ -153,7 +163,7 @@ int* Query3(Graph G, int QueryNode){
     int* temp = malloc(sizeof(int) * G.users);
     for(row = G.V[QueryNode-1].id - 1; row<G.V[QueryNode-1].id; row++){
 	for(col = 0; col<G.users; col++){
-	    if(*(G.Edges + row*G.users + col) != 0.0){
+	    if(*(G.Edges + row*G.users + col) > 0.0){
 		temp[i] = G.V[col].id;
 		i++;
 	    }
@@ -167,17 +177,20 @@ int* Query3(Graph G, int QueryNode){
     free(temp);
     return ID_array;
 }
-float Query5(Graph G){
+double Query5(Graph G){
     int i;
     int neighbors = 0;
-    float avg_neighbors = 0.0;
+    double avg_neighbors = 0.0;
     int* array = NULL;
     for(i = 1; i<=G.users; i++){
 	array = Query3(G,i);
 	neighbors += array[0];
 	free(array);
+	array = NULL;
     }
-    avg_neighbors = (float)neighbors / (float)G.users;
+    //printf("USERS: %d\n", G.users);
+    avg_neighbors = (double)neighbors / (double)G.users;
+    avg_neighbors = floorf(avg_neighbors*100) / 100;
     return avg_neighbors;
 }
 int minDist(Graph G,float* dist, int* S){
@@ -228,88 +241,73 @@ int Query2(Graph G, int queryNode, float alpha){
 	    min = dist[k];
 	}
     }
-    fprintf(stdout, "Query 1: %.2f,\t", min);
+    fprintf(stdout, "%.2f", min);
     for(k = 0; k < G.users; k++){
 	if(dist[k] == min && ((k+1) != queryNode)){
-	    fprintf(stdout,"%d ", k+1);
+	    fprintf(stdout,",%d", k+1);
 	}
     }
-    print_Dijkstras(dist,G);
+    fprintf(stdout,"\n");
+    //print_Dijkstras(dist,G);
     return counter;
 }
-void queue(int** Queue,int node, int* front, int* rear,Graph G){
-	if(*front == -1){
-	    *front = 0;
-	}
-	*rear = *rear + 1;
-	*Queue[*rear] = node;
-	printf("rear: %d Queue: %d\n", *rear,*Queue[*rear]);
-    
-}
-int delete(int** Queue, int* front, int* rear){
-	printf("Visited: %d\n", *Queue[*front]);
-	printf("front: %d\n", *front);
-	*front = *front + 1;
-	return *Queue[*front - 1];
-}
-int isEmpty(int* front, int* rear){
-    return(*front > *rear);
-}
-int* Query4(Graph G, int queryNode){
-    int* Flag = malloc(sizeof(int)*G.users);
-    int* Step = malloc(sizeof(int)*G.users);
-    int* temp = malloc(sizeof(int)*G.users);
-    int* Queue = malloc(sizeof(int) * G.users);
-    int* neighbors = NULL;
-    int front = -1;
-    int rear = -1;
-    int FrontNode = 0;
-    int i,k,counter;
-    int j = 0;
-    
-    for(k=0; k<G.users; k++){
-	Flag[k] = 0;
-	Step[k] = 0;
+int cmpfunc (const void * a, const void * b)
+{
+    if((*(int*)a) <= (*(int*)b)){
+	return -1;
     }
-    queue(&Queue,queryNode,&front,&rear,G);
-    Flag[queryNode - 1] = 1;
-    Step[queryNode - 1] = 0;
+    else{
+	return 1;
+    }
+}
 
-    while(isEmpty(&front,&rear) == 0){
-	    FrontNode = delete(&Queue,&front,&rear);  //deletes first element in queue
-	    neighbors = Query3(G,FrontNode);          //gets neighbors of deleted element
-	    printf("\nneigbors: %d\n", neighbors[0]);
-	    for(i = 1; i <= neighbors[0]; i++){       //for each neighbor  
-		//	printf("Flag: %d\n", Flag[neighbors[i] - 1]);
-		//printf("Flag[5]: %d\n", Flag[4]);
-		printf("%d\n", i);
-		if((neighbors[0] != 0) && (Flag[neighbors[i] - 1] == 0)){//checks to see if there are any neighbors and if the node has already been visited
-		    queue(&Queue,neighbors[i],&front,&rear,G);      //adds each neighbor to the queue
-		    Flag[neighbors[i] - 1] = 1;                        //sets flag to 1
-		    Step[neighbors[i] - 1] = Step[FrontNode - 1] + 1;   //sets step to the step of the deleted element + 1
-		    //printf("Flag[%d]: %d\n", neighbors[i] - 1, Flag[neighbors[i] - 1]);
+int Query4(Graph G, int queryNode, int display){
+    int* Flag = malloc(sizeof(int)*G.users);
+    int* First_Neighbors = Query3(G,queryNode);
+    int* Sec_Neighbors = malloc(sizeof(int)*G.users);
+    int i,row,col;
+    int k = 0;
+    int j = 0;
+    for(i = 0; i < G.users; i++){
+	Flag[i] = 0;
+	Sec_Neighbors[i] = 0;
+    }
+    for(i = 1; i <= First_Neighbors[0]; i++){
+	for(row = G.V[First_Neighbors[i]-1].id - 1; row<G.V[First_Neighbors[i]-1].id; row++){
+	    for(col = 0; col<G.users; col++){
+		if(Flag[col] == 0 && (*(G.Edges + row*G.users + col) != 0.0) && (col+1 != queryNode)){
+		    Sec_Neighbors[k] = col + 1;
+		    Flag[col] = 1;
+		    k++;
 		}
 	    }
-	    free(neighbors);
-    }
-
-    for(k = 0; k < G.users; k++){
-	if(Step[k] == 2){
-	    temp[j] = Step[k];
-	    j++;
 	}
     }
-    int* ID = malloc(sizeof(int)*(j+1));
-    ID[0] = j;
-    for(counter = 0; counter< j; counter++){
-	ID[counter+1] = temp[counter];
+    qsort(Sec_Neighbors,k,sizeof(int),cmpfunc);
+    if(display){
+	fprintf(stdout, "\n%d", k);
+	for(j = 0; j<k; j++){
+	    fprintf(stdout, ",%d", Sec_Neighbors[j]);
+	}
     }
-    free(temp);
+    free(First_Neighbors);
+    free(Sec_Neighbors);
     free(Flag);
-    free(Step);
-    free(Queue);
-    return ID;
-}   
+    return k;
+}
+void Query6(Graph G){
+    int i;
+    int sec_neighbors = 0;
+    double avg_neighbors = 0.0;
+
+    for(i = 1; i<=G.users; i++){
+	sec_neighbors += Query4(G,i,0);
+    }
+    avg_neighbors = (double)sec_neighbors / (double)G.users;
+    avg_neighbors = floorf(avg_neighbors * 100) / 100;
+    fprintf(stdout,"%.2lf\n", avg_neighbors);
+}
+
 int main(int argc, char** argv){
         FILE* fp = fopen(argv[1],"r");
 	char* entry = NULL;
@@ -332,12 +330,10 @@ int main(int argc, char** argv){
 	int count;
 	int counter = 1;
 	Graph G;
-	int max = 0;
+	double max = 0.0;
 	int* Nodes = NULL;
-	int length;
-	float avg_immed_neighbors = 0.0;
+	double avg_immed_neighbors = 0.0;
 	int Num_Nodes = 0;
-	int* TwoHops = NULL;
 
     	while((read = getline(&entry, &len,fp))!=-1){
 	    if(read > 1){
@@ -381,45 +377,68 @@ int main(int argc, char** argv){
 	}
 	fclose(fp);
 
+	//DENSE GRAPH
 	G = create_empty_Graph(numUsers,Vertex_Array);
-	//print_graph(G);
 	G = UNnorm_Graph(G);
-	//print_graph(G);
 	max = find_max(G);
 	G = norm_Graph(max,lambda1,G);
 
 	//Query 1 and Query 2
 	Num_Nodes = Query2(G,queryNode,alpha);
-	fprintf(stdout,"\nQuery 2: %d\n", Num_Nodes);
-
+	fprintf(stdout,"%d", Num_Nodes);
 	//Query 3
 	Nodes = Query3(G,queryNode);
-	length = Nodes[0];
-	fprintf(stdout,"Query 3: %d,\t", length);
-	for(count = 1; count<length + 1; count++){
-	    fprintf(stdout,"%d ", Nodes[count]);
+	fprintf(stdout,"\n%d", Nodes[0]);
+	for(count = 1; count<=Nodes[0]; count++){
+	    fprintf(stdout,",%d", Nodes[count]);
 	}
-	
 	//Query 4
-	TwoHops = Query4(G,queryNode);
-	fprintf(stdout, "\nQuery 4: %d,\t", TwoHops[0]);
-	for(count = 1; count<TwoHops[0] + 1; count++){
-	    fprintf(stdout, "%d ", TwoHops[count]);
-	}
-
+	int Sec_Level_Neighbors = Query4(G,queryNode,1);
 	//Query 5
 	avg_immed_neighbors = Query5(G);
-	fprintf(stdout,"\nQuery 5: %.2f\n", avg_immed_neighbors);
+	fprintf(stdout,"\n%.2lf\n", avg_immed_neighbors);
+	//Query 6
+	Query6(G);
+
 	//print_graph(G);
- 
+
 	//Freeing 
 	free(G.Edges);
 	free(Nodes);
-	free(TwoHops);
-	for(count = 0; count < numUsers; count++){
+	printf("\n");
+
+	//SPARSE GRAPH
+	G = create_empty_Graph(numUsers,Vertex_Array);
+        G = UNnorm_Graph(G);
+	max = find_max(G);
+	G = norm_Graph(max,lambda2,G);
+
+        //Query 1 and Query 2                                                                                                                                                                         
+        Num_Nodes = Query2(G,queryNode,alpha);
+        fprintf(stdout,"%d", Num_Nodes);
+        //Query 3                                                                                                                                                                                    
+        Nodes = Query3(G,queryNode);
+        fprintf(stdout,"\n%d", Nodes[0]);
+        for(count = 1; count<=Nodes[0]; count++){
+	    fprintf(stdout,",%d", Nodes[count]);
+        }
+        //Query 4                                                                                                                                                                                   
+        Sec_Level_Neighbors = Query4(G,queryNode,1);
+        //Query 5                                                                                                                                                                                     
+        avg_immed_neighbors = Query5(G);
+        fprintf(stdout,"\n%.2lf\n", avg_immed_neighbors);
+	//Query 6                                                                                                                                                                                   
+        Query6(G);
+        
+	//print_graph(G);                                                                                                                                                                            
+        
+	//Freeing                                                                                                                                                            
+        free(G.Edges);
+        free(Nodes);
+        for(count = 0; count < numUsers; count++){
 	    free(Vertex_Array[count].data);
-	}
-	free(Vertex_Array);
+        }
+        free(Vertex_Array);
 
 	return 0;
 }
