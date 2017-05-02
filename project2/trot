@@ -1,0 +1,129 @@
+#! /bin/bash
+#
+#
+#
+#
+#clear
+
+if (($# < 1))
+then
+  printf "Usage: trot <sort file> <(optional)Test Routines> (optional list selections) <(optional)list length>\ntry trot --help for more descriptions\n"
+  exit 1
+fi
+routineFile='myTestRoutine.c'
+listSize=10000
+inorder=1
+reorder=1
+randorder=1
+sortFile=$1
+if [[ $1 == "--help" ]]
+then
+  printf "trot requires a c file that contains a function named 'sort' but doesn't have a main function.\nUnless the second argument is an executable C file, it will compile and run the default test\nroutine file 'myTestRoutine.c'.\nIf the a personal test routine is not chosen, three other options can be chosen.  These are\nthree ones or zeroes which indicate if the test routine is to run with an in-order list, a\nreverse-order list, a random-order list, or any combination there of.\nFor example:\n\ttrot test.c 1 0 1\nWould run the sort function on an in-order list, and a random-order list.\nHowever:\n\ttrot test.c 1 0\nWould not function correctly.\nIf no options are selected, the default is to run all three.\nFinally, if the last argument of any run can be specified to be the length of all the lists.\nFor example:\n\ttrot test.c 10000\nRuns all three lists with lists of 10,000 elements\n\n"
+  exit 0
+fi
+if (($# == 2))
+then
+  if [[ $2 == "--help" ]]
+  then
+    printf "trot requires a c file that contains a function named 'sort' but doesn't have a main function.\nUnless the second argument is an executable C file, it will compile and run the default test\nroutine file 'myTestRoutine.c'.\nIf the a personal test routine is not chosen, three other options can be chosen.  These are\nthree ones or zeroes which indicate if the test routine is to run with an in-order list, a\nreverse-order list, a random-order list, or any combination there of.\nFor example:\n\ttrot test.c 1 0 1\nWould run the sort function on an in-order list, and a random-order list.\nHowever:\n\ttrot test.c 1 0\nWould not function correctly.\nIf no options are selected, the default is to run all three.\nFinally, if the last argument of any run can be specified to be the length of all the lists.\nFor example:\n\ttrot test.c 10000\nRuns all three lists with lists of 10,000 elements\n\n"
+    exit 0
+  else
+    re='^[0-9]+$'
+    if ! [[ $2 =~ $re ]]
+    then
+      routineFile=$2
+    fi
+  fi
+fi
+if (($# == 4))
+then
+  inorder=$2
+  reorder=$3
+  randorder=$4
+elif (($# == 5))
+then
+  inorder=$2
+  reorder=$3
+  randorder=$4
+  listSize=$5
+fi
+lastArg=($@)
+lastArg=${lastArg[(($#-1))]}
+re='^[0-9]+$'
+if [[ $lastArg =~ $re ]]
+then
+  if (( $lastArg > 1 ))
+  then
+    listSize=$lastArg
+  fi
+fi
+#while getopts f:r:i:b:-: opt; do
+#  case $thisopt in
+#    f)
+#      routineFile=$OPTARG
+#      ;;
+#    r)
+#      echo $OPTIND
+#      ;;
+#    i)
+#      echo $OPTARG
+#      ;;
+#    b)
+#      echo $OPTARG
+#      ;;
+#    -)
+#      val=$(echo $OPTARG | cut -d'=' -f2)
+#      ;;
+#    *)
+#      echo "Invalid Argument"
+#      ;;
+#  esac
+#done
+if [[ ! -e $routineFile ]]
+then
+  echo "$routineFile does not exist in the current path"
+  exit 1
+elif [[ ! -r $routineFile ]]
+then
+  echo "$routineFile is not a readable file"
+  exit 1
+fi
+if [[ ! -e $1 ]]
+then
+  echo "$1 does not exist in the current path"
+  exit 1
+elif [[ ! -r $1 ]]
+then
+  echo "1 is not a readable file"
+  exit 1
+fi
+
+ext=$(echo $sortFile | cut -d'.' -f2)
+if [[ $ext == 'c' ]]
+then
+  name=$(echo $sortFile | cut -d'.' -f1)
+  name="$name.h"
+  cp $sortFile $name
+  sortFile=$name
+elif [[ $ext == 'h' ]]
+then
+  name=$sortFile
+else
+  echo "Incorrect file type"
+  exit 1
+fi
+
+gcc -Wall $sortFile $routineFile &> compilation.log
+
+if (($? != 0))
+then
+  echo "Compilation failed. Errors written to compilation.log"
+  exit 1
+#else
+  #echo "Successful Compilation. Executing Test Routines..."
+fi
+#echo $inorder $reorder $randorder $listSize
+#Executions of the file
+a.out $inorder $reorder $randorder $listSize
+
+exit 0
