@@ -1,0 +1,29 @@
+Authors: Parth Patel and Caleb Niemann
+Emails : patel344@purdue.edu and niemann@purdue.edu
+
+Executable Files: 
+	   test.c
+	   
+Compiling Directions: 
+	  There is a makefile in this directory that needs to be edited depending on which mode is being tested. Examples are shown below.
+	    
+	    MODE 1:	    all:
+				gcc -Wall -Wshadow -g -lm -Wno-unused-variable  test.c  -o test 
+			        valgrind --tool=memcheck --leak-check=full --verbose --log-file=memcheck.log ./test .5 .3 1 10000  && cat memcheck.log | tail -n 1 
+
+	    MODE 2:	    all:
+	    	 	    	gcc -Wall -Wshadow -g -lm -Wno-unused-variable  test.c  -o test 
+				valgrind --tool=memcheck --leak-check=full --verbose --log-file=memcheck.log ./test testInput.txt   && cat memcheck.log | tail -n 1 
+
+Output: 
+	Program generates 4 performance parameters that are outputted to a file called proj1-a_output
+
+	Parameters generated to file in order:
+		   	     	Average Waiting Time of Type 0
+				Average Waiting Time of Type 1
+				Average Queue Length
+				Average Utilization of CPU
+
+Program Description: 
+	This program generates a simulation that evaluates the performance of a single CPU computer system using a priority-based queuing system. This program uses a single FEL linked list that is has all arrivals generated for types 0 and 1 sorted in order of arrival time. Then using a two-queue system, one for type 0 and one for type 1, the program generates a simulation that outputs the performance parameters to a file.
+
